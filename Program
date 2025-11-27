@@ -1,0 +1,130 @@
+import tkinter
+import tkinter.messagebox
+import pickle
+
+window = tkinter.Tk()
+window.title("Own To Do List")
+
+# --- Functions ---
+
+def task_adding():
+    ToDo = task_add.get()
+    if ToDo != "":
+        ToDo_box.insert(tkinter.END, "❌ " + ToDo)  # add prefix to show incomplete
+        task_add.delete(0, tkinter.END)
+    else:
+        tkinter.messagebox.showwarning(
+            title="Attention !!",
+            message="To add a task, please enter some text!"
+        )
+
+def task_removing():
+    try:
+        index_ToDo = ToDo_box.curselection()[0]
+        ToDo_box.delete(index_ToDo)
+    except:
+        tkinter.messagebox.showwarning(
+            title="Attention !!",
+            message="To delete a task, please select one!"
+        )
+
+def task_updating():
+    try:
+        index_ToDo = ToDo_box.curselection()[0]
+        old_text = ToDo_box.get(index_ToDo)
+        new_text = task_add.get()
+        if new_text != "":
+            # preserve completed status symbol if exists
+            prefix = "✅ " if old_text.startswith("✅") else "❌ "
+            ToDo_box.delete(index_ToDo)
+            ToDo_box.insert(index_ToDo, prefix + new_text)
+            task_add.delete(0, tkinter.END)
+        else:
+            tkinter.messagebox.showwarning(
+                title="Attention !!",
+                message="Please type new text to update!"
+            )
+    except:
+        tkinter.messagebox.showwarning(
+            title="Attention !!",
+            message="Please select a task to update!"
+        )
+
+def task_toggle_complete():
+    try:
+        index_ToDo = ToDo_box.curselection()[0]
+        text = ToDo_box.get(index_ToDo)
+        if text.startswith("❌ "):
+            text = "✅ " + text[2:]
+        else:
+            text = "❌ " + text[2:]
+        ToDo_box.delete(index_ToDo)
+        ToDo_box.insert(index_ToDo, text)
+    except:
+        tkinter.messagebox.showwarning(
+            title="Attention !!",
+            message="Please select a task to mark as complete or incomplete!"
+        )
+
+def task_load():
+    try:
+        ToDo_list = pickle.load(open("tasks.dat", "rb"))
+        ToDo_box.delete(0, tkinter.END)
+        for ToDo in ToDo_list:
+            ToDo_box.insert(tkinter.END, ToDo)
+    except:
+        tkinter.messagebox.showwarning(
+            title="Attention !!",
+            message="Cannot find any saved tasks."
+        )
+
+def task_save():
+    ToDo_list = ToDo_box.get(0, ToDo_box.size())
+    pickle.dump(ToDo_list, open("tasks.dat", "wb"))
+    tkinter.messagebox.showinfo(
+        title="Saved",
+        message="Your tasks have been saved successfully!"
+    )
+
+# --- GUI Layout ---
+
+list_frame = tkinter.Frame(window)
+list_frame.pack()
+
+ToDo_box = tkinter.Listbox(list_frame, height=20, width=50)
+ToDo_box.pack(side=tkinter.LEFT)
+
+scroller = tkinter.Scrollbar(list_frame)
+scroller.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+
+ToDo_box.config(yscrollcommand=scroller.set)
+scroller.config(command=ToDo_box.yview)
+
+task_add = tkinter.Entry(window, width=70)
+task_add.pack(pady=5)
+
+add_task_button = tkinter.Button(window, text="ADD TASK",
+                                 font=("arial", 15, "bold"), bg="#87CEEB", width=40, command=task_adding)
+add_task_button.pack(pady=2)
+
+update_task_button = tkinter.Button(window, text="UPDATE SELECTED TASK",
+                                    font=("arial", 15, "bold"), bg="#FFD580", width=40, command=task_updating)
+update_task_button.pack(pady=2)
+
+toggle_task_button = tkinter.Button(window, text="MARK COMPLETE / INCOMPLETE",
+                                    font=("arial", 15, "bold"), bg="#90EE90", width=40, command=task_toggle_complete)
+toggle_task_button.pack(pady=2)
+
+remove_task_button = tkinter.Button(window, text="REMOVE TASK",
+                                    font=("arial", 15, "bold"), bg="yellow", width=40, command=task_removing)
+remove_task_button.pack(pady=2)
+
+load_task_button = tkinter.Button(window, text="LOAD TASKS",
+                                  font=("arial", 15, "bold"), bg="lightgreen", width=40, command=task_load)
+load_task_button.pack(pady=2)
+
+save_task_button = tkinter.Button(window, text="SAVE TASKS",
+                                  font=("arial", 15, "bold"), bg="red", width=40, command=task_save)
+save_task_button.pack(pady=2)
+
+window.mainloop()
